@@ -1,0 +1,113 @@
+---
+title: "analysis preliminar"
+author: "Marc Bañuls Tornero"
+date: "10/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Regression analyses CONTENT variables for multiactor survey
+
+
+Get REDCap CONTENT data:
+
+```{r}
+content_data <- read.csv("CONTENTGCAT_DATA_2021-11-10_1659.csv")
+```
+
+Filter by complete questionnaires:
+```{r}
+content_data <- content_data[content_data$cuestionario_content_complete == 2,]
+```
+
+## depression regresion
+
+depression (mental_illness_diagnosed__1 == 1) against:
+"area salud mental"
+G16 (help_mental_health) yes, no
+G17 (regional_resources) yes, no, servicio privado
+G18 (affirmations) escala 0 to 10
+
+"Asistencia sanitaria de patologia no covid"
+H01 (private_health) yes, no
+i21 (medical aid confinement) yes, no
+
+"Violencia contra la mujer y violencia doméstica"
+G20 (violence) 0nunca 1aveces 2muchasveces
+G21a (violence_where__1,2,3,4) yes no para cada uno
+G21b (help_violence) yes no
+G21c (help_violence_quality) escala 0 10
+G22 (physical_violence) 0nunca 1aveces 2muchasveces
+G22a (violence_lesions_medical_attention) yes no
+g22b (lesions_where__1,2,3) yes no para cada uno
+G22c (help_physical_violence) yes no
+G22d (help_physical_violence_quality) escala 0 a 10
+
+"Conciliación laboral y cuidados (con perspectiva de género)
+por resolver
+
+"desigualdades sociles, pérdida de empleo e ingresos"
+I13 (work_change_informal__1,5) 1 to 5 y 88 (cada uno una cosa)
+I14 (work_change_formal__1,5) 1 to 5 (cada uno una cosa)
+J01 (study_level) 1 to 7 88otros y 77nose
+J02 (income_family_unit) 1 to 6  77noresponde
+J02b (change_income_familiar_unit) 1sube 2 baja 0 mantiene
+J02c (increase_income_specific) 1 si 77noresponde
+J02c1 (increase_income_specific2) unidades
+J02d (decrease_income_specific) 1 si 77noresponde
+J02d1 (decrease_income_specific2)unidades
+J02f (aids_pandemic) 0no 1 to 6 cosas 88otros
+J03 condición de migrantes..?
+
+"extra"
+A01 (age) unidades
+A02 (gender) 1 hombre 2 mujer 88 otros
+
+
+
+
+
+change to categorical data depression variable:
+```{r}
+content_data$mental_illness_diagnosed___1 <-as.factor(content_data$mental_illness_diagnosed___1)
+```
+
+```{r}
+str(content_data$mental_illness_diagnosed___1)
+```
+
+
+```{r}
+depression <- glm(content_data$mental_illness_diagnosed___1 ~ content_data$regional_resources + content_data$affirmations, family =binomial)
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+summary(depression)
+```
+
+```{r}
+class(content_data$feeling_depressed)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
