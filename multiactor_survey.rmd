@@ -67,7 +67,13 @@ J03 condición de migrantes..?
 A01 (age) unidades
 A02 (gender) 1 hombre 2 mujer 88 otros
 
+```{r}
+content_data$gender <- as.factor(content_data$gender)
+```
 
+```{r}
+str(content_data$gender)
+```
 
 
 
@@ -76,19 +82,11 @@ change to categorical data depression variable:
 content_data$mental_illness_diagnosed___1 <-as.factor(content_data$mental_illness_diagnosed___1)
 ```
 
-```{r}
-str(content_data$mental_illness_diagnosed___1)
-```
-
 
 ```{r}
-depression <- glm(content_data$mental_illness_diagnosed___1 ~ content_data$regional_resources + content_data$affirmations, family =binomial)
+depression <- glm(content_data$mental_illness_diagnosed___1 ~ content_data$regional_resources + content_data$affirmations + content_data$age + content_data$gender, family =binomial)
 ```
 
-
-```{r}
-
-```
 
 
 ```{r}
