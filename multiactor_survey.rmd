@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(oddsratio)
 ```
 
 
@@ -24,9 +25,8 @@ Filter by complete questionnaires:
 content_data <- content_data[content_data$cuestionario_content_complete == 2,]
 ```
 
-## depression regresion
+#variables
 
-depression (mental_illness_diagnosed__1 == 1) against:
 "area salud mental"
 G16 (help_mental_health) yes, no
 G17 (regional_resources) yes, no, servicio privado
@@ -67,13 +67,19 @@ J03 condición de migrantes..?
 A01 (age) unidades
 A02 (gender) 1 hombre 2 mujer 88 otros
 
+## depression regresion
+
+depression (mental_illness_diagnosed__1 == 1):
+
+### salud mental
+
+
+Change variables to factors (the ones needed):
 ```{r}
-content_data$gender <- as.factor(content_data$gender)
+content_data$help_mental_health <- as.factor(content_data$help_mental_health)
+content_data$regional_resources <- as.factor(content_data$regional_resources)
 ```
 
-```{r}
-str(content_data$gender)
-```
 
 
 
@@ -82,16 +88,45 @@ change to categorical data depression variable:
 content_data$mental_illness_diagnosed___1 <-as.factor(content_data$mental_illness_diagnosed___1)
 ```
 
+```{r}
+depression_help_mental_health <- glm(content_data$mental_illness_diagnosed___1 ~ content_data$help_mental_health, family =binomial)
+```
 
 ```{r}
-depression <- glm(content_data$mental_illness_diagnosed___1 ~ content_data$regional_resources + content_data$affirmations + content_data$age + content_data$gender, family =binomial)
+or_glm(content_data, depression_help_mental_health)
 ```
+
+The response (having depression) is 14 times more likely to occur when the participant has the need to look for mental health professionals
+
+```{r}
+depression_regional_resources <- glm(mental_illness_diagnosed___1 ~regional_resources, data = content_data, family = binomial)
+```
+
+```{r}
+or_glm(content_data, depression_regional_resources)
+```
+Is 7 times more likely that the participant has depression if the person has accessed to autonomic/statal resources during the pandemic, and 2 times more likely if it has used a private service.
+
+```{r}
+depression_affirmations <- glm(mental_illness_diagnosed___1 ~ affirmations, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_affirmations)
+```
+
+```{r}
+or_glm(content_data, depression_affirmations, incr = list(affirmations = 1))
+```
+
+The quality of the mental health resources does not seem to change the likelyhood of having depresion
 
 
 
 ```{r}
 summary(depression)
 ```
+
 
 ```{r}
 class(content_data$feeling_depressed)
