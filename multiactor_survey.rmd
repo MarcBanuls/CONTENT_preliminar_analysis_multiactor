@@ -244,7 +244,7 @@ summary(depression_physical_violence)
 ```
 
 ```{r}
-or_glm(content_data, depression_help_violence)
+or_glm(content_data, depression_physical_violence)
 ```
 
 physical_violence no significant
@@ -347,6 +347,9 @@ depression_study_level <- glm(mental_illness_diagnosed___1 ~ study_level, data =
 
 ```{r}
 summary(depression_study_level)
+```
+```{r}
+table(content_data$study_level)
 ```
 
 ```{r}
