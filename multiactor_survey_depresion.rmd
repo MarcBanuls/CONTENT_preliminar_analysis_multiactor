@@ -1,0 +1,479 @@
+---
+title: "analysis preliminar"
+author: "Marc Bañuls Tornero"
+date: "10/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(oddsratio)
+```
+
+
+# Regression analyses CONTENT variables for multiactor survey
+
+
+Get REDCap CONTENT data:
+
+```{r}
+content_data <- read.csv("CONTENTGCAT_DATA_2021-11-10_1659.csv")
+```
+
+Filter by complete questionnaires:
+```{r}
+content_data <- content_data[content_data$cuestionario_content_complete == 2,]
+```
+
+#variables
+
+"area salud mental"
+G16 (help_mental_health) yes, no
+G17 (regional_resources) yes, no, servicio privado
+G18 (affirmations) escala 0 to 10
+
+"Asistencia sanitaria de patologia no covid"
+H01 (private_health) yes, no
+i21 (medical aid confinement) yes, no
+
+"Violencia contra la mujer y violencia doméstica"
+G20 (violence) 0nunca 1aveces 2muchasveces
+G21a (violence_where__1,2,3,4) yes no para cada uno
+G21b (help_violence) yes no
+G21c (help_violence_quality) escala 0 10
+G22 (physical_violence) 0nunca 1aveces 2muchasveces
+G22a (violence_lesions_medical_attention) yes no
+g22b (lesions_where__1,2,3) yes no para cada uno
+G22c (help_physical_violence) yes no
+G22d (help_physical_violence_quality) escala 0 a 10
+
+```{r}
+names_violence_factor <- c("violence", "violence_where___1",  "violence_where___2",  "violence_where___3",  "violence_where___4", "help_violence", "physical_violence", "violence_lesions_medical_attention", "lesions_where___1", "lesions_where___2", "lesions_where___3", "help_physical_violence" )
+```
+
+```{r}
+content_data[, names_violence_factor] <- lapply(content_data[, names_violence_factor], factor)
+```
+
+
+
+"Conciliación laboral y cuidados (con perspectiva de género)
+por resolver
+
+"desigualdades sociles, pérdida de empleo e ingresos"
+I13 (work_change_informal__1,5) 1 to 5 y 88 (cada uno una cosa)
+I14 (work_change_formal__1,5) 1 to 5 (cada uno una cosa)
+J01 (study_level) 1 to 7 88otros y 77nose
+J02 (income_family_unit) 1 to 6  77noresponde
+J02b (change_income_familiar_unit) 1sube 2 baja 0 mantiene
+J02c (increase_income_specific) 1 si 77noresponde
+J02c1 (increase_income_specific2) unidades
+J02d (decrease_income_specific) 1 si 77noresponde
+J02d1 (decrease_income_specific2)unidades
+J02f (aids_pandemic) 0no 1 to 6 cosas 88otros
+J03 condición de migrantes..?
+
+```{r}
+names_laboral_and_care <- c("work_change_informal", "work_change_formal___1", "work_change_formal___2", "work_change_formal___3", "work_change_formal___4", "work_change_formal___5", "study_level", "income_family_unit", "change_income_familiar_unit", "increase_income_specific", "decrease_income_specific", "aids_pandemic")
+```
+
+```{r}
+content_data[, names_laboral_and_care] <- lapply(content_data[, names_laboral_and_care], factor)
+```
+
+```{r}
+str(content_data$change_income_familiar_unit)
+```
+
+
+
+"extra"
+A01 (age) unidades
+A02 (gender) 1 hombre 2 mujer 88 otros
+
+```{r}
+content_data$gender <- as.factor(content_data$gender)
+```
+
+```{r}
+table(content_data$gender)
+```
+
+
+## depression regresion
+
+depression (mental_illness_diagnosed__1 == 1):
+
+### salud mental
+
+
+Change variables to factors (the ones needed):
+```{r}
+content_data$help_mental_health <- as.factor(content_data$help_mental_health)
+content_data$regional_resources <- as.factor(content_data$regional_resources)
+```
+
+
+
+
+change to categorical data depression variable:
+```{r}
+content_data$mental_illness_diagnosed___1 <-as.factor(content_data$mental_illness_diagnosed___1)
+```
+
+```{r}
+depression_help_mental_health <- glm(content_data$mental_illness_diagnosed___1 ~ content_data$help_mental_health, family =binomial)
+```
+
+```{r}
+or_glm(content_data, depression_help_mental_health)
+```
+
+The response (having depression) is 14 times more likely to occur when the participant has the need to look for mental health professionals
+
+```{r}
+depression_regional_resources <- glm(mental_illness_diagnosed___1 ~regional_resources, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_regional_resources)
+```
+
+```{r}
+or_glm(content_data, depression_regional_resources)
+```
+Is 7 times more likely that the participant has depression if the person has accessed to autonomic/statal resources during the pandemic, and 2 times more likely if it has used a private service.
+
+```{r}
+depression_affirmations <- glm(mental_illness_diagnosed___1 ~ affirmations, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_affirmations)
+```
+
+```{r}
+or_glm(content_data, depression_affirmations, incr = list(affirmations = 1))
+```
+
+The quality of the mental health resources does not seem to change the likelihood of having depression
+
+
+These variables cannot be in the same logit regression because they interact with each other if the person does not see the need of mental health help (help_mental_health) the variables for if it attended mental health resources and the quality of it would be null, thus the coefficient for this variable would be null (as when setting the other variables to its reference it nullifies the participants who wanted mental health care)
+
+
+### Asistencia sanitaria de patologia no covid
+
+```{r}
+content_data$private_health <- as.factor(content_data$private_health)
+content_data$medical_aid_confinement <- as.factor(content_data$medical_aid_confinement)
+```
+
+
+```{r}
+depression_private_health <- glm(content_data$mental_illness_diagnosed___1 ~ content_data$private_health + content_data$medical_aid_confinement, family =binomial)
+```
+
+```{r}
+summary(depression_private_health)
+```
+
+```{r}
+or_glm(content_data, depression_private_health)
+```
+
+Here we see that people is more likely to have depression if they got medical aid during the confinement but there is no significant difference about accessing or not private health. 
+
+###  Violence
+
+"violence", "violence_where___1",  "violence_where___2",  "violence_where___3",  "violence_where___4", "help_violence", "physical_violence", "violence_lesions_medical_attention", "lesions_where___1", "lesions_where___2", "lesions_where___3", "help_physical_violence" )
+
+
+
+```{r}
+depression_violence <- glm(mental_illness_diagnosed___1 ~ violence, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_violence)
+```
+
+```{r}
+or_glm(content_data, depression_violence)
+```
+Both values are significant. If there were sometimes or many times violence during the pandemic it increased 4 to 8 times the likelihood of having depression.
+
+
+```{r}
+depression_violence_where <- glm(mental_illness_diagnosed___1 ~ violence_where___1 + violence_where___2 + violence_where___3 + violence_where___4, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_violence_where)
+```
+
+```{r}
+or_glm(content_data, depression_violence_where)
+```
+
+It is more likely that the person has depression if the violence is in the home (6 times more). the other values are not significant enough, but could be that having violence in virtual context could increase 4.5 times the likelihood of having depression.
+
+
+```{r}
+depression_help_violence <- glm(mental_illness_diagnosed___1 ~ help_violence, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_help_violence)
+```
+
+```{r}
+or_glm(content_data, depression_help_violence)
+```
+
+
+No significant
+
+
+```{r}
+depression_physical_violence <- glm(mental_illness_diagnosed___1 ~ physical_violence, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_physical_violence)
+```
+
+```{r}
+or_glm(content_data, depression_physical_violence)
+```
+
+physical_violence no significant
+
+violence_lesions_medical_attention
+
+```{r}
+depression_violence_lesions_medical_attention <- glm(mental_illness_diagnosed___1 ~ violence_lesions_medical_attention, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_violence_lesions_medical_attention)
+```
+
+```{r}
+or_glm(content_data, depression_violence_lesions_medical_attention)
+```
+
+non significant
+
+
+lesions_where___1
+
+```{r}
+depression_lesions_where <- glm(mental_illness_diagnosed___1 ~ lesions_where___1 + lesions_where___2 + lesions_where___3, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_lesions_where)
+```
+
+```{r}
+or_glm(content_data, depression_lesions_where)
+```
+
+
+non significant.
+
+
+help_physical_violence
+
+```{r}
+depression_help_physical_violence <- glm(mental_illness_diagnosed___1 ~ help_physical_violence, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_help_physical_violence)
+```
+
+```{r}
+or_glm(content_data, depression_help_physical_violence)
+```
+
+
+
+
+Non significant either
+
+# Work changes
+
+"work_change_informal", "work_change_formal___1", "work_change_formal___2", "work_change_formal___3", "work_change_formal___4", "work_change_formal___5", "study_level", "income_family_unit", "change_income_familiar_unit", "increase_income_specific", "decrease_income_specific", "aids_pandemic"
+
+help_physical_violence
+
+```{r}
+depression_work_change_informal <- glm(mental_illness_diagnosed___1 ~ work_change_informal, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_work_change_informal)
+```
+
+```{r}
+or_glm(content_data, depression_work_change_informal)
+```
+
+There are no significant changes in the odds ratio.
+
+work_change_formal
+
+```{r}
+depression_work_change_formal <- glm(mental_illness_diagnosed___1 ~ work_change_formal___1 + work_change_formal___2 + work_change_formal___3 + work_change_formal___4 + work_change_formal___5, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_work_change_formal)
+```
+
+```{r}
+or_glm(content_data, depression_work_change_formal)
+```
+
+no significant changes
+
+
+study_level
+```{r}
+depression_study_level <- glm(mental_illness_diagnosed___1 ~ study_level, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_study_level)
+```
+```{r}
+table(content_data$study_level)
+```
+
+```{r}
+or_glm(content_data, depression_study_level)
+```
+
+no significant differences either
+
+
+income_family_unit
+
+```{r}
+depression_income_family_unit <- glm(mental_illness_diagnosed___1 ~ income_family_unit, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_income_family_unit)
+```
+
+```{r}
+or_glm(content_data, depression_income_family_unit)
+```
+
+Although it is not significant at the 95% confidence, it looks like that when the income family unit is higher the lower likelihood is to be depressed.
+
+increase_income_specific
+
+```{r}
+depression_increase_income_specific <- glm(mental_illness_diagnosed___1 ~ increase_income_specific, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_increase_income_specific)
+```
+
+```{r}
+or_glm(content_data, depression_increase_income_specific)
+```
+
+No significant differences
+
+decrease_income_specific
+
+
+```{r}
+depression_decrease_income_specific <- glm(mental_illness_diagnosed___1 ~ decrease_income_specific, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_decrease_income_specific)
+```
+
+```{r}
+or_glm(content_data, depression_decrease_income_specific)
+```
+
+
+No significant changes either
+
+
+aids_pandemic
+
+```{r}
+depression_aids_pandemic <- glm(mental_illness_diagnosed___1 ~ aids_pandemic, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_aids_pandemic)
+```
+
+```{r}
+or_glm(content_data, depression_aids_pandemic)
+```
+
+no significant changes
+
+### extra
+
+age
+```{r}
+depression_age <- glm(mental_illness_diagnosed___1 ~ age, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_age)
+```
+
+```{r}
+or_glm(content_data, depression_age, incr = list(age = 1))
+```
+
+no significances with age
+
+
+
+gender
+```{r}
+depression_gender <- glm(mental_illness_diagnosed___1 ~ gender, data = content_data, family = binomial)
+```
+
+```{r}
+summary(depression_gender)
+```
+
+```{r}
+or_glm(content_data, depression_gender)
+```
+
+There are significant results with this variable. I 2 times more likely to have depression if the participant is a woman than a man. Regarding other genders there is no significance.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
